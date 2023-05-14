@@ -7,12 +7,17 @@ import "sceneManager"
 import "scenes/menu"
 import "scenes/chase"
 
+import "library"
+
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 local sound <const> = playdate.sound
 
 --Set Refresh Rate
 pd.display.setRefreshRate(50)
+
+--load images
+loadImages()
 
 --Global
 SCENE_MANAGER = SceneManager()

@@ -8,18 +8,33 @@ import "scenes/score"
 
 --Sprites
 import "sprites/building"
+import "sprites/truck"
+import "sprites/giantLeg"
+import "sprites/warning"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 local sound <const> = pd.sound
 
+--Z-Index
+local Z_INDEX_BUILDING = 5
+local Z_INDEX_TRUCK = 10
+local Z_INDEX_LEG = 150
+local Z_INDEX_PLAYER = 200
+local Z_INDEX_CLOUD = 200
+local Z_INDEX_UI = 1000
+
 --Constants
+local PLAYER_START_POSITION_X = 40
+local PLAYER_START_POSITION_Y = 220
 local ROAD_START_POSITION_X = 200
 local ROAD_START_POSITION_Y = 220
 local CLOUD_START_POSITION_X = 200
 local CLOUD_START_POSITION_Y = 15
-local BUILDING_START_POSITION_X = 25
-local BUILDING_START_POSITION_Y = 100
+local BUILDING_START_POSITION_X = 50
+local BUILDING_START_POSITION_Y = 0
+local LEG_START_POSITION_X = 250
+local LEG_START_POSITION_Y = 120
 
 --Images
 local image_road = gfx.image.new("images/road")
@@ -33,6 +48,11 @@ local sprite_player = nil
 local sprite_cloud_1 = nil
 local sprite_cloud_2 = nil
 local buildings = {}
+local truck = nil
+local leg_r = nil
+local leg_l = nil
+local tickBuffer = 0
+local warning = nil
 
 class('Chase').extends(gfx.sprite)
 
@@ -52,6 +72,8 @@ end
 function Chase:update()
     self:checkCrank()
     self:checkScrollingSprites()
+    moveClouds()
+    moveGiant()
 end
 
 
@@ -65,36 +87,59 @@ function Chase:initSprites ()
     sprite_road_2:moveTo(ROAD_START_POSITION_X * 3, ROAD_START_POSITION_Y)
     --buildings
     for i = 1, 9 do
-        buildings[i] = Building(BUILDING_START_POSITION_X + 50 * (i - 1), BUILDING_START_POSITION_Y)
+        buildings[i] = Building(BUILDING_START_POSITION_X + 100 * (i - 1), BUILDING_START_POSITION_Y)
+        buildings[i]:setZIndex(Z_INDEX_BUILDING)
+        buildings[i]:setScale(2)
     end
     --Player
     sprite_player = gfx.sprite.new(image_bike)
     sprite_player:setScale(2)
     sprite_player:add()
-    sprite_player:moveTo(40,220)
+    sprite_player:moveTo(PLAYER_START_POSITION_X, PLAYER_START_POSITION_Y)
+    sprite_player:setZIndex(Z_INDEX_PLAYER)
     --Cloud
     sprite_cloud_1 = gfx.sprite.new(image_cloud)
     sprite_cloud_2 = gfx.sprite.new(image_cloud)
     sprite_cloud_1:add()
     sprite_cloud_2:add()
-    sprite_cloud_1:setZIndex(2000)
-    sprite_cloud_2:setZIndex(2000)
+    sprite_cloud_1:setZIndex(Z_INDEX_CLOUD)
+    sprite_cloud_2:setZIndex(Z_INDEX_CLOUD)
     sprite_cloud_1:moveTo(CLOUD_START_POSITION_X, CLOUD_START_POSITION_Y)
     sprite_cloud_2:moveTo(CLOUD_START_POSITION_X * 3, CLOUD_START_POSITION_Y)
+    --Truck
+    truck = Truck(150,210)
+    truck:setZIndex(Z_INDEX_TRUCK)
+    --leg
+    leg_r = Leg(LEG_START_POSITION_X, LEG_START_POSITION_Y)
+    leg_r:setZIndex(Z_INDEX_LEG)
+    leg_l = Leg(LEG_START_POSITION_X + 30, LEG_START_POSITION_Y)
+    leg_l:setZIndex(Z_INDEX_LEG - 1)
+    --warning
+    warning = Warning(300,60)
+    warning:setZIndex(Z_INDEX_UI)
+    warning:setVisible(false)
 end
 
 function Chase:checkCrank()
-    local ticks = playdate.getCrankTicks(60)
-    if ticks > 1 then
-        moveWorld(ticks)
+    local ticks = playdate.getCrankTicks(360)
+    if ticks > tickBuffer then
+        tickBuffer = ticks
+        if tickBuffer > 30 then
+            tickBuffer = 30
+        end
     end
-    moveClouds()
+    if tickBuffer > 0 then
+        print(tickBuffer)
+        moveWorld(math.floor(tickBuffer / 6))
+        tickBuffer = tickBuffer - 1
+    end
 end
 
 function Chase:checkScrollingSprites()
     self:checkRoad()
     self:checkCloud()
     self:checkBuildings()
+    self:checkGiant()
 end
 
 function Chase:checkRoad()
@@ -118,15 +163,27 @@ function Chase:checkBuildings()
     local x_building, y_building = firstBuilding:getPosition()
     if x_building <= (-BUILDING_START_POSITION_X) then
         --Create New Building
-        buildings[10] = Building(BUILDING_START_POSITION_X + 50 * 9, BUILDING_START_POSITION_Y)
+        buildings[10] = Building(BUILDING_START_POSITION_X + 100 * 9, BUILDING_START_POSITION_Y)
         --Rearrange array
         for i = 1, 9 do
             buildings[i] = buildings[i+1]
-            buildings[i]:moveTo(BUILDING_START_POSITION_X + 50 * (i - 1), BUILDING_START_POSITION_Y)
-            buildings[i]:setZIndex(1)
+            buildings[i]:moveTo(BUILDING_START_POSITION_X + 100 * (i - 1), BUILDING_START_POSITION_Y)
+            buildings[i]:setZIndex(Z_INDEX_BUILDING)
+            buildings[i]:setScale(2)
         end
         buildings[10] = nil
-        printTable(buildings)
+    end
+end
+
+function Chase:checkGiant()
+    local legPositionX, legPositionY = leg_l:getPosition()
+    if legPositionX > 450 then
+        warning:setVisible(true)
+    else
+        warning:setVisible(false)
+    end
+    if legPositionX > LEG_START_POSITION_X * 3 then
+        SCENE_MANAGER:switchScene(Score)
     end
 end
 
@@ -147,6 +204,14 @@ function moveWorld(ticks)
         local x_building, y_building = building:getPosition()
         buildings[i]:moveTo(x_building - ticks, y_building)
     end
+    --truck
+    local x_truck, y_truck = truck:getPosition()
+    truck:moveTo(x_truck - ticks, y_truck)
+    --giant
+    local x_legL, y_legL = leg_l:getPosition()
+    leg_l:moveTo(x_legL - ticks, y_legL)
+    local x_legR, y_legR = leg_r:getPosition()
+    leg_r:moveTo(x_legR - ticks, y_legR)
 end
 
 function moveClouds()
@@ -154,4 +219,11 @@ function moveClouds()
     sprite_cloud_1:moveTo(x_cloud_1 - 1, y_cloud_1)
     local x_cloud_2, y_cloud_2 = sprite_cloud_2:getPosition()
     sprite_cloud_2:moveTo(x_cloud_2 - 1, y_cloud_2)
+end
+
+function moveGiant()
+    local x_legL, y_legL = leg_l:getPosition()
+    leg_l:moveTo(x_legL + 2, y_legL)
+    local x_legR, y_legR = leg_r:getPosition()
+    leg_r:moveTo(x_legR + 2, y_legR)
 end

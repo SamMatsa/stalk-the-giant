@@ -16,7 +16,7 @@ function Truck:init(x, y)
     self:moveTo(x,y)
 end
 
-function Building:getTruckImage()
+function Truck:getTruckImage()
     math.randomseed(playdate.getSecondsSinceEpoch())
     local randomNumber = math.random(1,1)
     return TRUCKS[randomNumber]

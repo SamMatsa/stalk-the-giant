@@ -25,7 +25,6 @@ function Building:getBuildingImage()
     if self.type == "BUILDING" then
         math.randomseed(playdate.getSecondsSinceEpoch())
         local randomNumber = math.random(1,5)
-        print(randomNumber)
         return BUILDINGS[randomNumber]
     end
     if self.type == "COFFEE" then

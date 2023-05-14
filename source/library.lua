@@ -11,7 +11,11 @@ TRUCKS = {}
 IMAGE_BUILDING = nil
 IMAGE_COFFEE_SHOP = nil
 IMAGE_PIZZA_SHOP = nil
+IMAGE_CUP = nil
 
+MONEY = 200
+ENERGY = 5
+ENERGY_MAX = 100
 
 function loadImages()
     --1. buildings array
@@ -26,4 +30,6 @@ function loadImages()
     IMAGE_PIZZA_SHOP = gfx.image.new("images/pizzaShop")
     --3. TRUCKS
     table.insert(TRUCKS, gfx.image.new("images/truck"))
+    -- ETC
+    IMAGE_CUP = gfx.image.new("images/cup")
 end

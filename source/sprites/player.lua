@@ -23,16 +23,37 @@ function Player:init(x, y)
 end
 
 function Player:update()
-    if #self:overlappingSprites() > 1 then
-        printTable(self:overlappingSprites())
-        print("There are Sprites")
+    print(self:canHide())
+end
+
+function Player:canBuyCoffee()
+    return self:searchForCollision("COFFEE")
+end
+
+function Player:canDeliverPizza()
+    return self:searchForCollision("PIZZA")
+end
+
+function Player:canHide()
+    return self:searchForCollision("TRUCK")
+end
+
+function Player:searchForCollision(spriteType)
+    if #self:overlappingSprites() > 0 then
+        local sprites = self:overlappingSprites()
+        for i = 1, #self:overlappingSprites() do
+            local sprite = sprites[i]
+            if sprite.type == spriteType then
+                return true
+            end
+        end
+        return false
+    else
+        return false
     end
 end
 
+
 function Player:collisionResponse(other)
-    printTable(other)
-    if other.className == "Building" then
-        print("building")
-    end
     return gfx.sprite.kCollisionTypeOverlap
 end

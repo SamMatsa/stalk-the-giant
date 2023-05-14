@@ -12,7 +12,7 @@ import "sprites/truck"
 import "sprites/giantLeg"
 import "sprites/warning"
 import "sprites/player"
-import "sprites/coffee"
+import "sprites/panel"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -37,6 +37,7 @@ local BUILDING_START_POSITION_X = 50
 local BUILDING_START_POSITION_Y = 0
 local LEG_START_POSITION_X = 250
 local LEG_START_POSITION_Y = 120
+local COFFEE_PRICE = 5
 
 --Images
 local image_road = gfx.image.new("images/road")
@@ -64,7 +65,9 @@ class('Chase').extends(gfx.sprite)
 
 local myInputHandlers = {
     AButtonDown = function()
-        --SCENE_MANAGER:switchScene(Menu)
+        if player:canBuyCoffee() then
+            buyCoffee()
+        end
     end,
 }
 
@@ -121,7 +124,8 @@ function Chase:initSprites ()
     warning:setZIndex(Z_INDEX_UI)
     warning:setVisible(false)
     --panel
-
+    panel = Panel(200, 15)
+    panel:setZIndex(Z_INDEX_UI)
 end
 
 function Chase:checkCrank()
@@ -237,4 +241,15 @@ function moveGiant()
     leg_l:moveTo(x_legL + 2, y_legL)
     local x_legR, y_legR = leg_r:getPosition()
     leg_r:moveTo(x_legR + 2, y_legR)
+end
+
+function buyCoffee()
+    if MONEY > COFFEE_PRICE then
+        MONEY = MONEY - COFFEE_PRICE
+        ENERGY = ENERGY + 10
+        if ENERGY > ENERGY_MAX then
+            ENERGY = ENERGY_MAX
+        end
+        panel:updateImage()
+    end
 end

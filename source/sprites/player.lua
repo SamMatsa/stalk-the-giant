@@ -7,13 +7,15 @@ local pd <const> = playdate
 local gfx <const> = pd.graphics
 local sound <const> = pd.sound
 
-local imageLeg = gfx.image.new("images/leg")
 
-class('Leg').extends(gfx.sprite)
+local image_bike = gfx.image.new("images/bike")
 
-function Leg:init(x, y)
-    Leg.super.init(self)
-    self:setImage(imageLeg)
+class('Player').extends(gfx.sprite)
+
+function Player:init(x, y)
+    Player.super.init(self)
+    self:setImage(image_bike)
+    self:setScale(2)
     self:add()
     self:moveTo(x,y)
     self:setCollideRect(0,0, self:getSize())

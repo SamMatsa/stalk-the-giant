@@ -11,6 +11,7 @@ import "sprites/building"
 import "sprites/truck"
 import "sprites/giantLeg"
 import "sprites/warning"
+import "sprites/player"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -38,13 +39,12 @@ local LEG_START_POSITION_Y = 120
 
 --Images
 local image_road = gfx.image.new("images/road")
-local image_bike = gfx.image.new("images/bike")
 local image_cloud = gfx.image.new("images/cloud")
 
 --Variables
 local sprite_road_1 = nil
 local sprite_road_2 = nil
-local sprite_player = nil
+local player = nil
 local sprite_cloud_1 = nil
 local sprite_cloud_2 = nil
 local buildings = {}
@@ -53,6 +53,9 @@ local leg_r = nil
 local leg_l = nil
 local tickBuffer = 0
 local warning = nil
+
+
+local coffeeCounter = 10
 
 class('Chase').extends(gfx.sprite)
 
@@ -92,11 +95,8 @@ function Chase:initSprites ()
         buildings[i]:setScale(2)
     end
     --Player
-    sprite_player = gfx.sprite.new(image_bike)
-    sprite_player:setScale(2)
-    sprite_player:add()
-    sprite_player:moveTo(PLAYER_START_POSITION_X, PLAYER_START_POSITION_Y)
-    sprite_player:setZIndex(Z_INDEX_PLAYER)
+    player = Player(PLAYER_START_POSITION_X, PLAYER_START_POSITION_Y)
+    player:setZIndex(Z_INDEX_PLAYER)
     --Cloud
     sprite_cloud_1 = gfx.sprite.new(image_cloud)
     sprite_cloud_2 = gfx.sprite.new(image_cloud)
@@ -162,8 +162,16 @@ function Chase:checkBuildings()
     local firstBuilding = buildings[1]
     local x_building, y_building = firstBuilding:getPosition()
     if x_building <= (-BUILDING_START_POSITION_X) then
+        --coffeeCounter
+        local type = "BUILDING"
+        if coffeeCounter > 10 then
+            type = "COFFEE"
+            coffeeCounter = 0
+        else
+            coffeeCounter = coffeeCounter + 1
+        end
         --Create New Building
-        buildings[10] = Building(BUILDING_START_POSITION_X + 100 * 9, BUILDING_START_POSITION_Y)
+        buildings[10] = Building(BUILDING_START_POSITION_X + 100 * 9, BUILDING_START_POSITION_Y, type)
         --Rearrange array
         for i = 1, 9 do
             buildings[i] = buildings[i+1]
@@ -183,7 +191,7 @@ function Chase:checkGiant()
         warning:setVisible(false)
     end
     if legPositionX > LEG_START_POSITION_X * 3 then
-        SCENE_MANAGER:switchScene(Score)
+        --SCENE_MANAGER:switchScene(Score)
     end
 end
 

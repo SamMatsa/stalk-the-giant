@@ -19,6 +19,8 @@ function Building:init(x, y, type)
     self:setImage(self:getBuildingImage())
     self:add()
     self:moveTo(x,y)
+    local playerSizeX, playerSizeY = self:getSize()
+    self:setCollideRect(0,0, playerSizeX * 2, playerSizeY)
 end
 
 function Building:getBuildingImage()

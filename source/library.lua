@@ -9,7 +9,7 @@ TRUCKS = {}
 
 --SPECIAL BUILDING IMAGE CASHE
 IMAGE_BUILDING = nil
-IMAGE_COFFE_SHOP = nil
+IMAGE_COFFEE_SHOP = nil
 IMAGE_PIZZA_SHOP = nil
 
 
@@ -22,7 +22,7 @@ function loadImages()
     table.insert(BUILDINGS, gfx.image.new("images/building5"))
     --2. special buildings
     IMAGE_BUILDING = gfx.image.new("images/building")
-    IMAGE_COFFE_SHOP = gfx.image.new("images/coffeeShop")
+    IMAGE_COFFEE_SHOP = gfx.image.new("images/coffeeShop")
     IMAGE_PIZZA_SHOP = gfx.image.new("images/pizzaShop")
     --3. TRUCKS
     table.insert(TRUCKS, gfx.image.new("images/truck"))

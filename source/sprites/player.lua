@@ -18,5 +18,21 @@ function Player:init(x, y)
     self:setScale(2)
     self:add()
     self:moveTo(x,y)
-    self:setCollideRect(0,0, self:getSize())
+    local collideX, collideY = self:getSize()
+    self:setCollideRect(0,-5, collideX, collideY *2)
+end
+
+function Player:update()
+    if #self:overlappingSprites() > 1 then
+        printTable(self:overlappingSprites())
+        print("There are Sprites")
+    end
+end
+
+function Player:collisionResponse(other)
+    printTable(other)
+    if other.className == "Building" then
+        print("building")
+    end
+    return gfx.sprite.kCollisionTypeOverlap
 end

@@ -19,8 +19,8 @@ function Building:init(x, y, type)
     self:setImage(self:getBuildingImage())
     self:add()
     self:moveTo(x,y)
-    local playerSizeX, playerSizeY = self:getSize()
-    self:setCollideRect(0,0, playerSizeX * 2, playerSizeY)
+    self:setScale(2)
+    self:setCollideRect(0,0, self:getSize())
 end
 
 function Building:getBuildingImage()
@@ -30,7 +30,7 @@ function Building:getBuildingImage()
         return BUILDINGS[randomNumber]
     end
     if self.type == "COFFEE" then
-        return IMAGE_COFFE_SHOP
+        return IMAGE_COFFEE_SHOP
     end
     if self.type == "PIZZA" then
         return IMAGE_PIZZA_SHOP

@@ -17,4 +17,5 @@ function Leg:init(x, y)
     self:add()
     self:moveTo(x,y)
     self:setCollideRect(0,0, self:getSize())
+    self.type = "GIANT"
 end

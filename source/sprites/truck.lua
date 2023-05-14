@@ -14,6 +14,8 @@ function Truck:init(x, y)
     self:setImage(self:getTruckImage())
     self:add()
     self:moveTo(x,y)
+    self:setCollideRect(0,0, self:getSize())
+    self.type = "TRUCK"
 end
 
 function Truck:getTruckImage()

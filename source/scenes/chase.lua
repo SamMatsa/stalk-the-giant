@@ -12,6 +12,7 @@ import "sprites/truck"
 import "sprites/giantLeg"
 import "sprites/warning"
 import "sprites/player"
+import "sprites/coffee"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -53,6 +54,7 @@ local leg_r = nil
 local leg_l = nil
 local tickBuffer = 0
 local warning = nil
+local panel = nil
 
 
 local coffeeCounter = 10
@@ -92,7 +94,7 @@ function Chase:initSprites ()
     for i = 1, 9 do
         buildings[i] = Building(BUILDING_START_POSITION_X + 100 * (i - 1), BUILDING_START_POSITION_Y)
         buildings[i]:setZIndex(Z_INDEX_BUILDING)
-        buildings[i]:setScale(2)
+        --buildings[i]:setScale(2)
     end
     --Player
     player = Player(PLAYER_START_POSITION_X, PLAYER_START_POSITION_Y)
@@ -118,6 +120,8 @@ function Chase:initSprites ()
     warning = Warning(300,60)
     warning:setZIndex(Z_INDEX_UI)
     warning:setVisible(false)
+    --panel
+
 end
 
 function Chase:checkCrank()
@@ -129,7 +133,6 @@ function Chase:checkCrank()
         end
     end
     if tickBuffer > 0 then
-        print(tickBuffer)
         moveWorld(math.floor(tickBuffer / 6))
         tickBuffer = tickBuffer - 1
     end
@@ -177,7 +180,7 @@ function Chase:checkBuildings()
             buildings[i] = buildings[i+1]
             buildings[i]:moveTo(BUILDING_START_POSITION_X + 100 * (i - 1), BUILDING_START_POSITION_Y)
             buildings[i]:setZIndex(Z_INDEX_BUILDING)
-            buildings[i]:setScale(2)
+            --buildings[i]:setScale(2)
         end
         buildings[10] = nil
     end

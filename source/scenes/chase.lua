@@ -55,10 +55,11 @@ local HINT_X = -60
 local coffeeBreakTimer = nil
 
 --Images
-local image_road = gfx.image.new("images/road")
+local image_road = gfx.image.new("images/road2")
 local image_cloud = gfx.image.new("images/cloud")
 local image_pizza_hint = gfx.image.new("images/hint_pizza_delivery")
 local image_coffe_hint = gfx.image.new("images/hint_coffee")
+local image_pizza_clown = gfx.image.new("images/pizza_clown")
 
 --Variables
 local sprite_road_1 = nil
@@ -222,6 +223,12 @@ function Chase:initSprites ()
     hint_coffee:setZIndex(Z_INDEX_HINT)
     hint_pizza_delivery:moveTo(HINT_X, HINT_Y)
     hint_coffee:moveTo(HINT_X, HINT_Y)
+    --piizaclown
+    hint_pizza_clown = gfx.sprite.new(image_pizza_clown)
+    hint_pizza_clown:add()
+    hint_pizza_clown:setZIndex(Z_INDEX_HINT)
+    clownX, clownY = clown:getPosition()
+    hint_pizza_clown:moveTo(clownX, clownY - 60)
 end
 
 function Chase:checkCrank()
@@ -406,6 +413,9 @@ function moveWorld(ticks)
     hint_coffee:moveTo(x_hint_c - ticks, y_hint_c)
     local x_hint_p, y_hint_p = hint_pizza_delivery:getPosition()
     hint_pizza_delivery:moveTo(x_hint_p - ticks, y_hint_p)
+    --pizza clown
+    local clownX, clownY = clown:getPosition()
+    hint_pizza_clown:moveTo(clownX, clownY - 60)
 end
 
 function moveClouds()

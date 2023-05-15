@@ -26,6 +26,10 @@ local myInputHandlers = {
 }
 
 function Score:init()
+    if DEATH_REASON == "ESCAPE" then
+        image = image_escapes
+        text = "The giant escaped.. never to be seen again!"
+    end
     if DEATH_REASON == "PANCAKE" then
         image = image_pancake
         text = "You are a pancake now."

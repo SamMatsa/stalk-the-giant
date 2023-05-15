@@ -28,5 +28,5 @@ function pd.update()
 	gfx.sprite.update() -- updates ALL Sprites
     pd.timer.updateTimers() --update ALL timers
     SCENE_MANAGER:update()  --update Scene
-    pd.drawFPS(0,0) -- FPS widget
+    --pd.drawFPS(0,0) -- FPS widget
 end

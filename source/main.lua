@@ -14,7 +14,7 @@ local gfx <const> = pd.graphics
 local sound <const> = playdate.sound
 
 --Set Refresh Rate
-pd.display.setRefreshRate(50)
+pd.display.setRefreshRate(30)
 
 --load images
 loadImages()

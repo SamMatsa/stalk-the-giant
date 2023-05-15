@@ -18,6 +18,11 @@ ENERGY_MAX = 100
 ENERGY = ENERGY_MAX
 METERS = 0
 
+--MUSIC
+MUSIC = nil
+
+DEATH_REASON = "ESCAPE"
+
 function loadImages()
     --1. buildings array
     table.insert(BUILDINGS, gfx.image.new("images/building"))

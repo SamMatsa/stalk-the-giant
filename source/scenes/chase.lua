@@ -33,6 +33,7 @@ local Z_INDEX_CLOUD = 200
 local Z_INDEX_UI = 1000
 
 --Constants
+local GIANT_SPEED = 2
 local PLAYER_START_POSITION_X = 70
 local PLAYER_START_POSITION_Y = 220
 local ROAD_START_POSITION_X = 200
@@ -132,9 +133,15 @@ local myInputHandlers = {
 }
 
 function Chase:init()
+    resetGame()
+    -- MUSIC
+    MUSIC = sound.sampleplayer.new('music/chase')
+    MUSIC:play(0)
+    
     self:initSprites()
     reduceEnergy()
     pd.inputHandlers.push(myInputHandlers)
+    pd.timer.performAfterDelay(60000, increaseDifficulty)
 end
 
 
@@ -427,15 +434,15 @@ end
 
 function moveGiant()
     local x_legL, y_legL = leg_l:getPosition()
-    leg_l:moveTo(x_legL + 2, y_legL)
+    leg_l:moveTo(x_legL + GIANT_SPEED, y_legL)
     local x_legR, y_legR = leg_r:getPosition()
-    leg_r:moveTo(x_legR + 2, y_legR)
+    leg_r:moveTo(x_legR + GIANT_SPEED, y_legR)
 end
 
 function buyCoffee()
     if MONEY > COFFEE_PRICE then
         MONEY = MONEY - COFFEE_PRICE
-        ENERGY = ENERGY + 10
+        ENERGY = ENERGY + 30
         if ENERGY > ENERGY_MAX then
             ENERGY = ENERGY_MAX
         end
@@ -444,7 +451,7 @@ function buyCoffee()
 end
 
 function reduceEnergy()
-    ENERGY = ENERGY - 7
+    ENERGY = ENERGY - 5
     if ENERGY < 0 then
         ENERGY = 0
     end
@@ -472,8 +479,9 @@ end
 
 function hide(truckX, truckY)
     player.hidden = true
+    pX, pY = player:getPosition()
     --Set Sprite
-    player:moveTo(truckX + 20, truckY)
+    player:moveTo(pX, truckY)
     player:setZIndex(Z_INDEX_HIDDEN)
     --player:setHideSprite()
     player.canMove = false
@@ -507,19 +515,23 @@ end
 function checkGameOver()
     --Touches giant
     if player:giantTouch() then
+        DEATH_REASON = "PANCAKE"
         SCENE_MANAGER:switchScene(Score)
     end
     --Player is seen by giant
     if player.hidden == false and head:canSeePlayer() then
+        DEATH_REASON = "SEEN"
         SCENE_MANAGER:switchScene(Score)
     end
     --Player runs out of coffee
     if ENERGY <= 0 then
+        DEATH_REASON = "COFFEE"
         SCENE_MANAGER:switchScene(Score)
     end
     --The giant "escapes" (yes this doesnt make any sense)
     local legPositionX, legPositionY = leg_l:getPosition()
     if legPositionX > LEG_START_POSITION_X * 3 then
+        DEATH_REASON = "ESCAPE"
         SCENE_MANAGER:switchScene(Score)
     end
 end
@@ -546,5 +558,52 @@ function checkGiantSus()
 end
 
 function resetGame()
-    
+    coffeeBreakTimer = nil
+    image_road = gfx.image.new("images/road2")
+    image_cloud = gfx.image.new("images/cloud")
+    image_pizza_hint = gfx.image.new("images/hint_pizza_delivery")
+    image_coffe_hint = gfx.image.new("images/hint_coffee")
+    image_pizza_clown = gfx.image.new("images/pizza_clown")
+    sprite_road_1 = nil
+    sprite_road_2 = nil
+    player = nil
+    sprite_cloud_1 = nil
+    sprite_cloud_2 = nil
+    buildings = {}
+    truck = nil
+    truck2 = nil
+    leg_r = nil
+    leg_l = nil
+    tickBuffer = 0
+    warning = nil
+    panel = nil
+    pizzas = {}
+    clown = nil
+    clown_2 = nil
+    clown_3 = nil
+    head = nil
+    hint_pizza_delivery = nil
+    hint_coffee = nil
+    coffeeCounter = 10
+    pizzaCounter = 6
+    pizzaInBackpack = 0
+    moveClownTrigger = false
+    moveTruckTrigger = false
+    moveTruckTrigger2 = false
+    truck_InFront = false
+    susCounter = 2
+    giant_moves = true
+    GIANT_SPEED = 2
+
+
+    MONEY = 0
+    ENERGY_MAX = 100
+    ENERGY = ENERGY_MAX
+    METERS = 0
+    DEATH_REASON = "ESCAPE"
+end
+
+function increaseDifficulty()
+    GIANT_SPEED = GIANT_SPEED + 1
+    pd.timer.performAfterDelay(60000, increaseDifficulty)
 end

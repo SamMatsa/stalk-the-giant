@@ -23,15 +23,27 @@ function Player:init(x, y)
 end
 
 function Player:update()
-    print(self:canHide())
+    printTable(self:overlappingSprites())
 end
 
 function Player:canBuyCoffee()
     return self:searchForCollision("COFFEE")
 end
 
+function Player:canGetPizza()
+    local canGetPizza, pizzaPlace = self:searchForCollision("PIZZA")
+    if canGetPizza then
+        if pizzaPlace == self.currentPizzaPlace then
+            return false
+        else
+            self.currentPizzaPlace = pizzaPlace
+        end
+    end
+    return canGetPizza
+end
+
 function Player:canDeliverPizza()
-    return self:searchForCollision("PIZZA")
+    return self:searchForCollision("CUSTOMER")
 end
 
 function Player:canHide()
@@ -44,7 +56,7 @@ function Player:searchForCollision(spriteType)
         for i = 1, #self:overlappingSprites() do
             local sprite = sprites[i]
             if sprite.type == spriteType then
-                return true
+                return true, sprite
             end
         end
         return false

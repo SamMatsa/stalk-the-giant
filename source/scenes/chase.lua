@@ -13,6 +13,7 @@ import "sprites/giantLeg"
 import "sprites/warning"
 import "sprites/player"
 import "sprites/panel"
+import "sprites/pizza"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -39,6 +40,9 @@ local LEG_START_POSITION_X = 250
 local LEG_START_POSITION_Y = 120
 local COFFEE_PRICE = 5
 
+--timer
+local coffeeBreakTimer = nil
+
 --Images
 local image_road = gfx.image.new("images/road")
 local image_cloud = gfx.image.new("images/cloud")
@@ -56,9 +60,14 @@ local leg_l = nil
 local tickBuffer = 0
 local warning = nil
 local panel = nil
+local pizzas = {}
 
 
 local coffeeCounter = 10
+local pizzaCounter = 6
+
+
+local pizzaInBackpack = 0
 
 class('Chase').extends(gfx.sprite)
 
@@ -68,11 +77,15 @@ local myInputHandlers = {
         if player:canBuyCoffee() then
             buyCoffee()
         end
+        if player:canGetPizza() then
+            getPizza()
+        end
     end,
 }
 
 function Chase:init()
     self:initSprites()
+    reduceEnergy()
     pd.inputHandlers.push(myInputHandlers)
 end
 
@@ -80,6 +93,7 @@ end
 function Chase:update()
     self:checkCrank()
     self:checkScrollingSprites()
+    self:checkPizzas()
     moveClouds()
     moveGiant()
 end
@@ -115,9 +129,9 @@ function Chase:initSprites ()
     truck = Truck(150,210)
     truck:setZIndex(Z_INDEX_TRUCK)
     --leg
-    leg_r = Leg(LEG_START_POSITION_X, LEG_START_POSITION_Y)
+    leg_r = Leg(LEG_START_POSITION_X, LEG_START_POSITION_Y - 50, true)
     leg_r:setZIndex(Z_INDEX_LEG)
-    leg_l = Leg(LEG_START_POSITION_X + 30, LEG_START_POSITION_Y)
+    leg_l = Leg(LEG_START_POSITION_X + 30, LEG_START_POSITION_Y, false)
     leg_l:setZIndex(Z_INDEX_LEG - 1)
     --warning
     warning = Warning(300,60)
@@ -126,6 +140,11 @@ function Chase:initSprites ()
     --panel
     panel = Panel(200, 15)
     panel:setZIndex(Z_INDEX_UI)
+    --pizza
+    for i = 1, 3 do
+        table.insert(pizzas, Pizza(20, 10 + 32*i))
+        pizzas[i]:setZIndex(Z_INDEX_UI)
+    end
 end
 
 function Chase:checkCrank()
@@ -174,7 +193,11 @@ function Chase:checkBuildings()
         if coffeeCounter > 10 then
             type = "COFFEE"
             coffeeCounter = 0
+        elseif pizzaCounter > 6 then
+            type = "PIZZA"
+            pizzaCounter = 0
         else
+            pizzaCounter = pizzaCounter + 1
             coffeeCounter = coffeeCounter + 1
         end
         --Create New Building
@@ -199,6 +222,17 @@ function Chase:checkGiant()
     end
     if legPositionX > LEG_START_POSITION_X * 3 then
         --SCENE_MANAGER:switchScene(Score)
+    end
+end
+
+function Chase:checkPizzas()
+    if pizzaInBackpack > 0 then
+        for i = 1, 3 do
+            pizzas[i]:setVisible(false)     
+        end
+        for i = 1, pizzaInBackpack do
+            pizzas[i]:setVisible(true)     
+        end
     end
 end
 
@@ -251,5 +285,20 @@ function buyCoffee()
             ENERGY = ENERGY_MAX
         end
         panel:updateImage()
+    end
+end
+
+function reduceEnergy()
+    ENERGY = ENERGY - 5
+    if ENERGY < 0 then
+        ENERGY = 0
+    end
+    coffeeBreakTimer = pd.timer.performAfterDelay(5000, reduceEnergy)
+    panel:updateImage()
+end
+
+function getPizza()
+    if pizzaInBackpack < 3 then
+        pizzaInBackpack = pizzaInBackpack + 1
     end
 end

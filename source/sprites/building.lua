@@ -21,6 +21,7 @@ function Building:init(x, y, type)
     self:moveTo(x,y)
     self:setScale(2)
     self:setCollideRect(0,0, self:getSize())
+    self.interactiveObject = nil
 end
 
 function Building:getBuildingImage()

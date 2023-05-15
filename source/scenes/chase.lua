@@ -14,6 +14,7 @@ import "sprites/warning"
 import "sprites/player"
 import "sprites/panel"
 import "sprites/pizza"
+import "sprites/clown"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -21,6 +22,7 @@ local sound <const> = pd.sound
 
 --Z-Index
 local Z_INDEX_BUILDING = 5
+local Z_INDEX_HIDDEN = 8
 local Z_INDEX_TRUCK = 10
 local Z_INDEX_LEG = 150
 local Z_INDEX_PLAYER = 200
@@ -28,7 +30,7 @@ local Z_INDEX_CLOUD = 200
 local Z_INDEX_UI = 1000
 
 --Constants
-local PLAYER_START_POSITION_X = 40
+local PLAYER_START_POSITION_X = 70
 local PLAYER_START_POSITION_Y = 220
 local ROAD_START_POSITION_X = 200
 local ROAD_START_POSITION_Y = 220
@@ -38,6 +40,10 @@ local BUILDING_START_POSITION_X = 50
 local BUILDING_START_POSITION_Y = 0
 local LEG_START_POSITION_X = 250
 local LEG_START_POSITION_Y = 120
+local TRUCK_START_POSITION_X = 150
+local TRUCK_START_POSITION_Y = 210
+local CLOWN_START_POSITION_X = 400
+local CLOWN_START_POSITION_Y = 210
 local COFFEE_PRICE = 5
 
 --timer
@@ -55,12 +61,14 @@ local sprite_cloud_1 = nil
 local sprite_cloud_2 = nil
 local buildings = {}
 local truck = nil
+local truck2 = nil
 local leg_r = nil
 local leg_l = nil
 local tickBuffer = 0
 local warning = nil
 local panel = nil
 local pizzas = {}
+local clown = nil
 
 
 local coffeeCounter = 10
@@ -68,6 +76,11 @@ local pizzaCounter = 6
 
 
 local pizzaInBackpack = 0
+
+
+local moveClownTrigger = false
+local moveTruckTrigger = false
+local moveTruckTrigger2 = false
 
 class('Chase').extends(gfx.sprite)
 
@@ -79,6 +92,17 @@ local myInputHandlers = {
         end
         if player:canGetPizza() then
             getPizza()
+        end
+        if player:canDeliverPizza() then
+            deliverPizza()
+        end
+    end,
+    BButtonDown = function()
+        if player:canHide() and (not player.hidden) then
+            canHide, truckSprite = player:canHide()
+            hide(truckSprite:getPosition())
+        elseif player.hidden then
+            unhide()
         end
     end,
 }
@@ -128,6 +152,11 @@ function Chase:initSprites ()
     --Truck
     truck = Truck(150,210)
     truck:setZIndex(Z_INDEX_TRUCK)
+    truck2 = Truck(320,210)
+    truck2:setZIndex(Z_INDEX_TRUCK)
+    --Clown
+    clown = Clown(400,210)
+    clown:setZIndex(Z_INDEX_TRUCK)
     --leg
     leg_r = Leg(LEG_START_POSITION_X, LEG_START_POSITION_Y - 50, true)
     leg_r:setZIndex(Z_INDEX_LEG)
@@ -148,16 +177,20 @@ function Chase:initSprites ()
 end
 
 function Chase:checkCrank()
-    local ticks = playdate.getCrankTicks(360)
-    if ticks > tickBuffer then
-        tickBuffer = ticks
-        if tickBuffer > 30 then
-            tickBuffer = 30
+    if player.canMove then
+        local ticks = playdate.getCrankTicks(360)
+        if ticks > tickBuffer then
+            tickBuffer = ticks
+            if tickBuffer > 30 then
+                tickBuffer = 30
+            end
         end
-    end
-    if tickBuffer > 0 then
-        moveWorld(math.floor(tickBuffer / 6))
-        tickBuffer = tickBuffer - 1
+        if tickBuffer > 0 then
+            moveWorld(math.floor(tickBuffer / 6))
+            tickBuffer = tickBuffer - 1
+        end
+    else
+        tickBuffer = 0
     end
 end
 
@@ -166,6 +199,30 @@ function Chase:checkScrollingSprites()
     self:checkCloud()
     self:checkBuildings()
     self:checkGiant()
+    self:checkClown()
+    self:checkTruck()
+    self:checkTruck2()
+end
+
+function Chase:checkClown()
+    local x_clown, y_clown = clown:getPosition()
+    if x_clown <= -200 then
+        moveClownTrigger = true
+    end
+end
+
+function Chase:checkTruck()
+    local x_truck, y_truck = truck:getPosition()
+    if x_truck <= -300 then
+        moveTruckTrigger = true
+    end
+end
+
+function Chase:checkTruck2()
+    local x_truck2, y_truck2 = truck2:getPosition()
+    if x_truck2 <= -40 then
+        moveTruckTrigger2 = true
+    end
 end
 
 function Chase:checkRoad()
@@ -209,6 +266,24 @@ function Chase:checkBuildings()
             buildings[i]:setZIndex(Z_INDEX_BUILDING)
             --buildings[i]:setScale(2)
         end
+        --Trigger
+        if moveTruckTrigger and type == "BUILDING" then
+            print("MOVE TRUCK")
+            x,y = buildings[9]:getPosition()
+            truck:moveTo(x, TRUCK_START_POSITION_Y)
+            moveTruckTrigger = false
+        elseif moveTruckTrigger2 and type == "BUILDING" then
+            print("MOVE TRUCK 2")
+            x,y = buildings[9]:getPosition()
+            truck2:moveTo(x, TRUCK_START_POSITION_Y)
+            moveTruckTrigger2 = false
+        elseif moveClownTrigger and type == "BUILDING" then
+            print("MOVE CLOWN")
+            x,y = buildings[9]:getPosition()
+            clown:moveTo(x, CLOWN_START_POSITION_Y)
+            moveClownTrigger = false
+        end
+        --Delete dublicate Building
         buildings[10] = nil
     end
 end
@@ -226,13 +301,11 @@ function Chase:checkGiant()
 end
 
 function Chase:checkPizzas()
-    if pizzaInBackpack > 0 then
-        for i = 1, 3 do
-            pizzas[i]:setVisible(false)     
-        end
-        for i = 1, pizzaInBackpack do
-            pizzas[i]:setVisible(true)     
-        end
+    for i = 1, 3 do
+        pizzas[i]:setVisible(false)     
+    end
+    for i = 1, pizzaInBackpack do
+        pizzas[i]:setVisible(true)     
     end
 end
 
@@ -256,6 +329,12 @@ function moveWorld(ticks)
     --truck
     local x_truck, y_truck = truck:getPosition()
     truck:moveTo(x_truck - ticks, y_truck)
+    --truck
+    local x_truck2, y_truck2 = truck2:getPosition()
+    truck2:moveTo(x_truck2 - ticks, y_truck2)
+    --clown
+    local x_clown, y_clown = clown:getPosition()
+    clown:moveTo(x_clown - ticks, y_clown)
     --giant
     local x_legL, y_legL = leg_l:getPosition()
     leg_l:moveTo(x_legL - ticks, y_legL)
@@ -301,4 +380,35 @@ function getPizza()
     if pizzaInBackpack < 3 then
         pizzaInBackpack = pizzaInBackpack + 1
     end
+end
+
+function deliverPizza()
+    print("something should happen")
+    if pizzaInBackpack == 3 then
+        MONEY = MONEY + 100
+    elseif pizzaInBackpack == 2 then
+        MONEY = MONEY + 50
+    elseif pizzaInBackpack == 1 then
+        MONEY = MONEY + 20
+    end
+    pizzaInBackpack = 0
+    panel:updateImage()
+end
+
+function hide(truckX, truckY)
+    player.hidden = true
+    --Set Sprite
+    player:moveTo(truckX + 20, truckY)
+    player:setZIndex(Z_INDEX_HIDDEN)
+    --player:setHideSprite()
+    player.canMove = false
+end
+
+function unhide()
+    player.hidden = false
+    --Set Sprite
+    player:moveTo(PLAYER_START_POSITION_X, PLAYER_START_POSITION_Y)
+    player:setZIndex(Z_INDEX_PLAYER)
+    --player:setUnhideSprite()
+    player.canMove = true
 end

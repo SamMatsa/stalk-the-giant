@@ -9,6 +9,7 @@ local sound <const> = pd.sound
 
 
 local image_bike = gfx.image.new("images/bike")
+local image_bike_hidden = gfx.image.new("images/bike_hidden")
 
 class('Player').extends(gfx.sprite)
 
@@ -20,10 +21,12 @@ function Player:init(x, y)
     self:moveTo(x,y)
     local collideX, collideY = self:getSize()
     self:setCollideRect(0,-5, collideX, collideY *2)
+    self.hidden = false
+    self.canMove = true
 end
 
 function Player:update()
-    printTable(self:overlappingSprites())
+   -- printTable(self:overlappingSprites())
 end
 
 function Player:canBuyCoffee()
@@ -43,7 +46,7 @@ function Player:canGetPizza()
 end
 
 function Player:canDeliverPizza()
-    return self:searchForCollision("CUSTOMER")
+    return self:searchForCollision("CLOWN")
 end
 
 function Player:canHide()
@@ -68,4 +71,12 @@ end
 
 function Player:collisionResponse(other)
     return gfx.sprite.kCollisionTypeOverlap
+end
+
+function Player:setHideSprite()
+    self:setImage(image_bike_hidden)
+end
+
+function Player:setUnhideSprite()
+    self:setImage(image_bike)
 end

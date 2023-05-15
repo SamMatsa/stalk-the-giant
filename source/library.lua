@@ -13,9 +13,10 @@ IMAGE_COFFEE_SHOP = nil
 IMAGE_PIZZA_SHOP = nil
 IMAGE_CUP = nil
 
-MONEY = 200
-ENERGY = 5
+MONEY = 0
 ENERGY_MAX = 100
+ENERGY = ENERGY_MAX
+METERS = 0
 
 function loadImages()
     --1. buildings array

@@ -15,6 +15,7 @@ import "sprites/player"
 import "sprites/panel"
 import "sprites/pizza"
 import "sprites/clown"
+import "sprites/head"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -24,7 +25,9 @@ local sound <const> = pd.sound
 local Z_INDEX_BUILDING = 5
 local Z_INDEX_HIDDEN = 8
 local Z_INDEX_TRUCK = 10
+local Z_INDEX_HINT = 15
 local Z_INDEX_LEG = 150
+local Z_INDEX_HEAD = 180
 local Z_INDEX_PLAYER = 200
 local Z_INDEX_CLOUD = 200
 local Z_INDEX_UI = 1000
@@ -44,7 +47,9 @@ local TRUCK_START_POSITION_X = 150
 local TRUCK_START_POSITION_Y = 210
 local CLOWN_START_POSITION_X = 400
 local CLOWN_START_POSITION_Y = 210
-local COFFEE_PRICE = 5
+local COFFEE_PRICE = 15
+local HINT_Y = 75
+local HINT_X = -60
 
 --timer
 local coffeeBreakTimer = nil
@@ -52,6 +57,8 @@ local coffeeBreakTimer = nil
 --Images
 local image_road = gfx.image.new("images/road")
 local image_cloud = gfx.image.new("images/cloud")
+local image_pizza_hint = gfx.image.new("images/hint_pizza_delivery")
+local image_coffe_hint = gfx.image.new("images/hint_coffee")
 
 --Variables
 local sprite_road_1 = nil
@@ -69,6 +76,12 @@ local warning = nil
 local panel = nil
 local pizzas = {}
 local clown = nil
+local clown_2 = nil
+local clown_3 = nil
+local head = nil
+
+local hint_pizza_delivery = nil
+local hint_coffee = nil
 
 
 local coffeeCounter = 10
@@ -81,6 +94,16 @@ local pizzaInBackpack = 0
 local moveClownTrigger = false
 local moveTruckTrigger = false
 local moveTruckTrigger2 = false
+
+
+local truck_InFront = false
+
+local susCounter = 2
+--1 Giant sus timer
+local giant_moves = true
+--Random after 1 or max 3 trucks the giant starts sussing
+-- He stands still shortly after the last truck that made him suspisoi
+
 
 class('Chase').extends(gfx.sprite)
 
@@ -119,7 +142,16 @@ function Chase:update()
     self:checkScrollingSprites()
     self:checkPizzas()
     moveClouds()
-    moveGiant()
+    if not giant_moves then
+        if not (head.animator == nil) and head.animator:ended() then
+            startGiant()
+        end
+    else
+        moveGiant()
+    end
+    print(head:canSeePlayer())
+    checkGameOver()
+    checkGiantSus()
 end
 
 
@@ -155,6 +187,10 @@ function Chase:initSprites ()
     truck2 = Truck(320,210)
     truck2:setZIndex(Z_INDEX_TRUCK)
     --Clown
+    clown_2 = Clown(-40,210)
+    clown_2:setZIndex(Z_INDEX_TRUCK)
+    clown_3 = Clown(-40,210)
+    clown_3:setZIndex(Z_INDEX_TRUCK)
     clown = Clown(400,210)
     clown:setZIndex(Z_INDEX_TRUCK)
     --leg
@@ -174,6 +210,18 @@ function Chase:initSprites ()
         table.insert(pizzas, Pizza(20, 10 + 32*i))
         pizzas[i]:setZIndex(Z_INDEX_UI)
     end
+    --head
+    head = Head(HEAD_X_START,HEAD_Y_START)
+    head:setZIndex(Z_INDEX_HEAD)
+    --hint
+    hint_pizza_delivery = gfx.sprite.new(image_pizza_hint)
+    hint_coffee = gfx.sprite.new(image_coffe_hint)
+    hint_pizza_delivery:add()
+    hint_coffee:add()
+    hint_pizza_delivery:setZIndex(Z_INDEX_HINT)
+    hint_coffee:setZIndex(Z_INDEX_HINT)
+    hint_pizza_delivery:moveTo(HINT_X, HINT_Y)
+    hint_coffee:moveTo(HINT_X, HINT_Y)
 end
 
 function Chase:checkCrank()
@@ -266,6 +314,14 @@ function Chase:checkBuildings()
             buildings[i]:setZIndex(Z_INDEX_BUILDING)
             --buildings[i]:setScale(2)
         end
+        if buildings[9].type == "COFFEE" then
+            local positionX, positionY = buildings[9]:getPosition()
+            hint_coffee:moveTo(positionX, HINT_Y)
+        end
+        if buildings[9].type == "PIZZA" then
+            local positionX, positionY = buildings[9]:getPosition()
+            hint_pizza_delivery:moveTo(positionX, HINT_Y)
+        end
         --Trigger
         if moveTruckTrigger and type == "BUILDING" then
             print("MOVE TRUCK")
@@ -281,6 +337,8 @@ function Chase:checkBuildings()
             print("MOVE CLOWN")
             x,y = buildings[9]:getPosition()
             clown:moveTo(x, CLOWN_START_POSITION_Y)
+            clown_2:moveTo(x + 10, CLOWN_START_POSITION_Y - 4)
+            clown_3:moveTo(x - 10, CLOWN_START_POSITION_Y - 4)
             moveClownTrigger = false
         end
         --Delete dublicate Building
@@ -295,9 +353,6 @@ function Chase:checkGiant()
     else
         warning:setVisible(false)
     end
-    if legPositionX > LEG_START_POSITION_X * 3 then
-        --SCENE_MANAGER:switchScene(Score)
-    end
 end
 
 function Chase:checkPizzas()
@@ -310,6 +365,8 @@ function Chase:checkPizzas()
 end
 
 function moveWorld(ticks)
+    --MeterCounter
+    METERS = METERS + ticks
     --road
     local x_road_1, y_road_1 = sprite_road_1:getPosition()
     sprite_road_1:moveTo(x_road_1 - ticks, y_road_1)
@@ -335,11 +392,20 @@ function moveWorld(ticks)
     --clown
     local x_clown, y_clown = clown:getPosition()
     clown:moveTo(x_clown - ticks, y_clown)
+    local x_clown_2, y_clown_2 = clown_2:getPosition()
+    clown_2:moveTo(x_clown_2 - ticks, y_clown_2)
+    local x_clown_3, y_clown_3 = clown_3:getPosition()
+    clown_3:moveTo(x_clown_3 - ticks, y_clown_3)
     --giant
     local x_legL, y_legL = leg_l:getPosition()
     leg_l:moveTo(x_legL - ticks, y_legL)
     local x_legR, y_legR = leg_r:getPosition()
     leg_r:moveTo(x_legR - ticks, y_legR)
+    --hints
+    local x_hint_c, y_hint_c = hint_coffee:getPosition()
+    hint_coffee:moveTo(x_hint_c - ticks, y_hint_c)
+    local x_hint_p, y_hint_p = hint_pizza_delivery:getPosition()
+    hint_pizza_delivery:moveTo(x_hint_p - ticks, y_hint_p)
 end
 
 function moveClouds()
@@ -368,7 +434,7 @@ function buyCoffee()
 end
 
 function reduceEnergy()
-    ENERGY = ENERGY - 5
+    ENERGY = ENERGY - 7
     if ENERGY < 0 then
         ENERGY = 0
     end
@@ -383,7 +449,6 @@ function getPizza()
 end
 
 function deliverPizza()
-    print("something should happen")
     if pizzaInBackpack == 3 then
         MONEY = MONEY + 100
     elseif pizzaInBackpack == 2 then
@@ -411,4 +476,65 @@ function unhide()
     player:setZIndex(Z_INDEX_PLAYER)
     --player:setUnhideSprite()
     player.canMove = true
+end
+
+function stopGiant()
+    --Stop animation
+    giant_moves = false
+    leg_l.wait = true
+    leg_r.wait = true
+    --Start Head Animation
+    head:startAnimation()
+end
+
+function startGiant()
+    --Stop animation
+    giant_moves = true
+    leg_l.wait = false
+    leg_r.wait = false
+end
+
+function checkGameOver()
+    --Touches giant
+    if player:giantTouch() then
+        SCENE_MANAGER:switchScene(Score)
+    end
+    --Player is seen by giant
+    if player.hidden == false and head:canSeePlayer() then
+        SCENE_MANAGER:switchScene(Score)
+    end
+    --Player runs out of coffee
+    if ENERGY <= 0 then
+        SCENE_MANAGER:switchScene(Score)
+    end
+    --The giant "escapes" (yes this doesnt make any sense)
+    local legPositionX, legPositionY = leg_l:getPosition()
+    if legPositionX > LEG_START_POSITION_X * 3 then
+        SCENE_MANAGER:switchScene(Score)
+    end
+end
+
+function checkGiantSus()
+    --Check Truck
+    if susCounter > 0 and giant_moves then
+        truckPositionX, truckPositionY = truck:getPosition()
+        legPositionX, legPositionY = leg_r:getPosition()
+        if truckPositionX > legPositionX then
+            truck_InFront = true
+        end
+        if truckPositionX < legPositionX and truck_InFront then
+            susCounter = susCounter - 1 
+            truck_InFront = false
+        end
+        --Sus Counter just became 0
+        if susCounter == 0 then
+            pd.timer.performAfterDelay(2000, stopGiant)
+            math.randomseed(playdate.getSecondsSinceEpoch())
+            susCounter = math.random(1,2)
+        end
+    end
+end
+
+function resetGame()
+    
 end

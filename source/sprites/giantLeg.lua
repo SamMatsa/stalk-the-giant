@@ -27,7 +27,7 @@ function Leg:init(x, y, delay)
 end
 
 function Leg:update()
-    if not wait then
+    if not self.wait then
         self:animate()
     end
 end

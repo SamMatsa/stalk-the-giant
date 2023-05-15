@@ -23,15 +23,21 @@ function Panel:init(x, y)
     self:moveTo(x,y)
 end
 
+function Panel:update()
+    self:updateImage()
+end
+
 function Panel:getImage()
-    image = gfx.image.new("images/panel")
+    image = gfx.image.new("images/panel_w")
     gfx.pushContext(image)
         --MONEY
         gfx.setFont(fontSmall)
         gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-        gfx.drawTextInRect(tostring(MONEY) .. "$", 20, 5, 50, 30, nil, nil, kTextAlignment.right)
+        gfx.drawTextInRect("$" .. tostring(MONEY) , 15, 5, 50, 30, nil, nil, kTextAlignment.left)
+        --METERS
+        gfx.drawTextInRect(tostring(math.floor(METERS/40)) .. " m", 280, 5, 100, 30, nil, nil, kTextAlignment.right)
         --CUP ICON
-        IMAGE_CUP:draw(250,-1)
+        IMAGE_CUP:draw(100,-1)
     gfx.popContext()
     --HEALTHBAR
     local BAR_FILL_WIDTH = (ENERGY / ENERGY_MAX) * BAR_WIDTH
@@ -44,7 +50,7 @@ function Panel:getImage()
         gfx.fillRect(0, 0, BAR_FILL_WIDTH, BAR_HEIGHT)
     gfx.popContext(fillImage)
     gfx.pushContext(image)
-        fillImage:draw(100,10)
+        fillImage:draw(150,10)
     gfx.popContext()
     return image
 end

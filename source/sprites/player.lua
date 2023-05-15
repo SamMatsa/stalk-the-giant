@@ -53,6 +53,10 @@ function Player:canHide()
     return self:searchForCollision("TRUCK")
 end
 
+function Player:giantTouch()
+    return self:searchForCollision("GIANT")
+end
+
 function Player:searchForCollision(spriteType)
     if #self:overlappingSprites() > 0 then
         local sprites = self:overlappingSprites()
